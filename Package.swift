@@ -11,6 +11,7 @@ let package = Package(
     products: [
         .library(
             name: "MyNumberCardReader",
+            type: .dynamic,
             targets: ["MyNumberCardReader"]
         )
     ],
