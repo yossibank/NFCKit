@@ -50,7 +50,9 @@ let package = Package(
         .testTarget(
             name: "MyNumberCardReaderTests",
             dependencies: [
+                "NFCCore",
                 "NFCTransport",
+                "NFCTransportMocks",
                 "MyNumberCardReader"
             ]
         )
