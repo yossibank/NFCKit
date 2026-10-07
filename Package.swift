@@ -34,7 +34,10 @@ let package = Package(
         ),
         .testTarget(
             name: "NFCCoreTests",
-            dependencies: ["NFCCore"]
+            dependencies: [
+                "NFCCore",
+                "NFCTransportMocks"
+            ]
         ),
         .testTarget(
             name: "NFCTransportTests",
