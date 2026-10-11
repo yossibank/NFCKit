@@ -1,10 +1,6 @@
-<div align="center">
-
 # NFCKit
 
 マイナンバーカードの IC チップを Core NFC で読み取る iOS SDK
-
-</div>
 
 この README は、IC カードとの通信に出てくる用語を説明する。
 
