@@ -1,6 +1,6 @@
 import NFCTransport
 
-package struct ScriptedCardSessionProvider: CardSessionProvider {
+package struct ScriptedCardSessionProvider {
     package let transport: ScriptedCardTransport
     package let sessionFailure: TransportError?
 
@@ -11,9 +11,11 @@ package struct ScriptedCardSessionProvider: CardSessionProvider {
         self.transport = transport
         self.sessionFailure = sessionFailure
     }
+}
 
-    // 「開始 → 検出 → 接続 → 処理 → 切断」をメソッド内に閉じ込める
-    // 処理が途中で失敗しても切断を忘れることがない
+extension ScriptedCardSessionProvider: CardSessionProvider {
+    /// 「開始 → 検出 → 接続 → 処理 → 切断」をメソッド内に閉じ込める
+    /// 処理が途中で失敗しても切断を忘れることがない
     package func withSession<T: Sendable, Failure: Error>(
         _ operation: (any CardTransport) async throws(Failure) -> T
     ) async throws(CardSessionError<Failure>) -> T {

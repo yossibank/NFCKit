@@ -13,9 +13,13 @@ struct ScriptedCardTransportTests {
         let select = try CommandAPDU.select(efIdentifier: 0x0011)
         let verify = try CommandAPDU.verify(reference: 0x80)
 
-        #expect(try await transport.transmit(select) == first)
-        #expect(try await transport.transmit(verify) == second)
-        #expect(await transport.sentCommands == [select, verify])
+        let firstResponse = try await transport.transmit(select)
+        let secondResponse = try await transport.transmit(verify)
+        let sent = await transport.sentCommands
+
+        #expect(firstResponse == first)
+        #expect(secondResponse == second)
+        #expect(sent == [select, verify])
     }
 
     @Test("台本のエラーを投げる")
@@ -37,22 +41,16 @@ struct ScriptedCardTransportTests {
             try await transport.transmit(command)
         }
 
-        #expect(await transport.sentCommands == [command])
+        let sent = await transport.sentCommands
+        #expect(sent == [command])
     }
 }
 
 struct ScriptedCardSessionProviderTests {
-    enum Failure: Error, Equatable {
-        case aborted
-    }
-
     @Test("処理の戻り値をそのまま返す")
     func returnsValue() async throws {
-        let provider = ScriptedCardSessionProvider(
-            transport: ScriptedCardTransport(
-                responses: []
-            )
-        )
+        let transport = ScriptedCardTransport(responses: [])
+        let provider = ScriptedCardSessionProvider(transport: transport)
 
         let value = try await provider.withSession { _ throws(Failure) in
             42
@@ -63,8 +61,10 @@ struct ScriptedCardSessionProviderTests {
 
     @Test("セッションの失敗は transport を包む")
     func sessionFailure() async {
+        let transport = ScriptedCardTransport(responses: [])
+
         let provider = ScriptedCardSessionProvider(
-            transport: ScriptedCardTransport(responses: []),
+            transport: transport,
             sessionFailure: .tagNotFound
         )
 
@@ -77,16 +77,19 @@ struct ScriptedCardSessionProviderTests {
 
     @Test("処理のエラーは operation で包む")
     func operationFailure() async {
-        let provider = ScriptedCardSessionProvider(
-            transport: ScriptedCardTransport(
-                responses: []
-            )
-        )
+        let transport = ScriptedCardTransport(responses: [])
+        let provider = ScriptedCardSessionProvider(transport: transport)
 
         await #expect(throws: CardSessionError<Failure>.operation(.aborted)) {
             try await provider.withSession { _ throws(Failure) in
                 throw .aborted
             }
         }
+    }
+}
+
+extension ScriptedCardSessionProviderTests {
+    enum Failure: Error, Equatable {
+        case aborted
     }
 }

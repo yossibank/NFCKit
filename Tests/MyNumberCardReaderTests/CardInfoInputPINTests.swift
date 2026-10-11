@@ -4,7 +4,8 @@ import Testing
 struct CardInfoInputPINTests {
     @Test("4 桁の半角数字だけ受け付ける")
     func valid() {
-        #expect(CardInfoInputPIN("0123") != nil)
+        let pin = CardInfoInputPIN("0123")
+        #expect(pin != nil)
     }
 
     @Test(
@@ -18,21 +19,24 @@ struct CardInfoInputPINTests {
         ]
     )
     func invalid(digits: String) {
-        #expect(CardInfoInputPIN(digits) == nil)
+        let pin = CardInfoInputPIN(digits)
+        #expect(pin == nil)
     }
 
     @Test("文字列にしても値が出ない")
     func description() throws {
         let pin = try #require(CardInfoInputPIN("1234"))
 
-        #expect("\(pin)" == "****")
-        #expect(String(reflecting: pin) == "****")
+        let text = "\(pin)"
+        let reflected = String(reflecting: pin)
+
+        #expect(text == "****")
+        #expect(reflected == "****")
     }
 
     @Test("dump しても値が出ない")
     func dumpOutput() throws {
         let pin = try #require(CardInfoInputPIN("1234"))
-
         var output = ""
 
         dump(pin, to: &output)

@@ -11,63 +11,68 @@ import Testing
 struct BERTLVTests {
     @Test("1 バイトのタグ")
     func singleByteTag() throws {
+        let expected = BERTLV(tag: 0x80, value: Data([0xAA, 0xBB]))
         let objects = try BERTLV.parse(Data([0x80, 0x02, 0xAA, 0xBB]))
-
-        #expect(objects == [BERTLV(tag: 0x80, value: Data([0xAA, 0xBB]))])
+        #expect(objects == [expected])
     }
 
     @Test("2 バイトのタグ")
     func twoByteTag() throws {
+        let expected = BERTLV(tag: 0x5F20, value: Data([0x41]))
         let objects = try BERTLV.parse(Data([0x5F, 0x20, 0x01, 0x41]))
-
-        #expect(objects == [BERTLV(tag: 0x5F20, value: Data([0x41]))])
+        #expect(objects == [expected])
     }
 
     @Test("3 バイトのタグと長さ 0")
     func threeByteTag() throws {
+        let expected = BERTLV(tag: 0x5F8101, value: Data())
         let objects = try BERTLV.parse(Data([0x5F, 0x81, 0x01, 0x00]))
-
-        #expect(objects == [BERTLV(tag: 0x5F8101, value: Data())])
+        #expect(objects == [expected])
     }
 
     @Test("長さ 81 の形式")
     func longLength81() throws {
-        let objects = try BERTLV.parse(Data([0x04, 0x81, 0x80]) + Data(count: 128))
-
+        let data = Data([0x04, 0x81, 0x80]) + Data(count: 128)
+        let objects = try BERTLV.parse(data)
         #expect(objects.first?.value.count == 128)
     }
 
     @Test("長さ 82 の形式")
     func longLength82() throws {
-        let objects = try BERTLV.parse(Data([0x04, 0x82, 0x01, 0x00]) + Data(count: 256))
-
+        let data = Data([0x04, 0x82, 0x01, 0x00]) + Data(count: 256)
+        let objects = try BERTLV.parse(data)
         #expect(objects.first?.value.count == 256)
     }
 
     @Test("並んだ複数のデータオブジェクト")
     func sequence() throws {
-        let objects = try BERTLV.parse(Data([0x80, 0x01, 0x01, 0x81, 0x01, 0x02]))
-
-        #expect(objects == [
+        let expected = [
             BERTLV(tag: 0x80, value: Data([0x01])),
             BERTLV(tag: 0x81, value: Data([0x02]))
-        ])
+        ]
+
+        let objects = try BERTLV.parse(Data([0x80, 0x01, 0x01, 0x81, 0x01, 0x02]))
+
+        #expect(objects == expected)
     }
 
     @Test("空のデータは空の配列")
     func empty() throws {
-        #expect(try BERTLV.parse(Data()).isEmpty)
+        let objects = try BERTLV.parse(Data())
+        #expect(objects.isEmpty)
     }
 
     @Test("構造化タグの中身を読む")
     func children() throws {
+        let expected = [
+            BERTLV(tag: 0x02, value: Data([0x05])),
+            BERTLV(tag: 0x04, value: Data([0xFF]))
+        ]
+
         let objects = try BERTLV.parse(Data([0x30, 0x06, 0x02, 0x01, 0x05, 0x04, 0x01, 0xFF]))
         let children = try #require(objects.first).children()
 
-        #expect(children == [
-            BERTLV(tag: 0x02, value: Data([0x05])),
-            BERTLV(tag: 0x04, value: Data([0xFF]))
-        ])
+        #expect(children == expected)
     }
 
     @Test(
@@ -79,14 +84,20 @@ struct BERTLVTests {
             (UInt32(0x5F20), false)
         ]
     )
-    func isConstructed(tag: UInt32, expected: Bool) {
-        #expect(BERTLV(tag: tag, value: Data()).isConstructed == expected)
+    func isConstructed(
+        tag: UInt32,
+        expected: Bool
+    ) {
+        let object = BERTLV(tag: tag, value: Data())
+        #expect(object.isConstructed == expected)
     }
 
     @Test("構造化出ないタグに children は使えない")
     func childrenOfPrimitive() {
+        let object = BERTLV(tag: 0x04, value: Data([0x01, 0x00]))
+
         #expect(throws: BERTLVError.notConstructed) {
-            try BERTLV(tag: 0x04, value: Data([0x01, 0x00])).children()
+            try object.children()
         }
     }
 
@@ -108,9 +119,14 @@ struct BERTLVTests {
             ([0x04, 0x84, 0xFF, 0xFF, 0xFF, 0xFF], .truncatedValue)
         ]
     )
-    func malformed(bytes: [UInt8], expected: BERTLVError) {
+    func malformed(
+        bytes: [UInt8],
+        expected: BERTLVError
+    ) {
+        let data = Data(bytes)
+
         #expect(throws: expected) {
-            try BERTLV.parse(Data(bytes))
+            try BERTLV.parse(data)
         }
     }
 }

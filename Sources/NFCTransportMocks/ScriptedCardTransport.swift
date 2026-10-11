@@ -1,7 +1,7 @@
 import NFCCore
 import NFCTransport
 
-package actor ScriptedCardTransport: CardTransport {
+package actor ScriptedCardTransport {
     package private(set) var sentCommands: [CommandAPDU] = []
 
     private var responses: [Result<ResponseAPDU, TransportError>]
@@ -9,7 +9,9 @@ package actor ScriptedCardTransport: CardTransport {
     package init(responses: [Result<ResponseAPDU, TransportError>]) {
         self.responses = responses
     }
+}
 
+extension ScriptedCardTransport: CardTransport {
     package func transmit(_ command: CommandAPDU) async throws(TransportError) -> ResponseAPDU {
         sentCommands.append(command)
 

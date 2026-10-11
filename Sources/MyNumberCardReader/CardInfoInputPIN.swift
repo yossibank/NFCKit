@@ -13,11 +13,13 @@ public struct CardInfoInputPIN: Sendable {
     }
 }
 
-extension CardInfoInputPIN: CustomStringConvertible, CustomReflectable {
+extension CardInfoInputPIN: CustomStringConvertible {
     public var description: String {
         "****"
     }
+}
 
+extension CardInfoInputPIN: CustomReflectable {
     public var customMirror: Mirror {
         Mirror(self, children: [:])
     }

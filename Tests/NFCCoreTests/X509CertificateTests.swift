@@ -6,17 +6,20 @@ import Testing
 struct X509CertificateTests {
     @Test("シリアル番号・発行者・有効期限の終わりを取り出す")
     func parse() throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der())
+        let der = SampleCertificate.der()
+        let notAfter = date("2031-01-01T00:00:00Z")
+
+        let certificate = try X509Certificate(der: der)
 
         #expect(certificate.serialNumber == Data([0x1A, 0x2B, 0x3C, 0x4D]))
         #expect(certificate.issuer == "C=JP, O=JPKI, OU=JPKI for user authentication")
-        #expect(certificate.notAfter == date("2031-01-01T00:00:00Z"))
+        #expect(certificate.notAfter == notAfter)
     }
 
     @Test("シリアル番号の先頭の 00 は取り除く")
     func serialNumberSignByte() throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der(serialNumber: [0x00, 0x80]))
-
+        let der = SampleCertificate.der(serialNumber: [0x00, 0x80])
+        let certificate = try X509Certificate(der: der)
         #expect(certificate.serialNumber == Data([0x80]))
     }
 
@@ -27,17 +30,22 @@ struct X509CertificateTests {
             ("500101000000Z", "1950-01-01T00:00:00Z")
         ]
     )
-    func utcTime(value: String, expected: String) throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der(notAfter: (0x17, value)))
-
-        #expect(certificate.notAfter == date(expected))
+    func utcTime(
+        value: String,
+        expected: String
+    ) throws {
+        let der = SampleCertificate.der(notAfter: (0x17, value))
+        let notAfter = date(expected)
+        let certificate = try X509Certificate(der: der)
+        #expect(certificate.notAfter == notAfter)
     }
 
     @Test("GeneralizedTime は 4 桁の年")
     func generalizedTime() throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der(notAfter: (0x18, "20500101000000Z")))
-
-        #expect(certificate.notAfter == date("2050-01-01T00:00:00Z"))
+        let der = SampleCertificate.der(notAfter: (0x18, "20500101000000Z"))
+        let notAfter = date("2050-01-01T00:00:00Z")
+        let certificate = try X509Certificate(der: der)
+        #expect(certificate.notAfter == notAfter)
     }
 
     @Test(
@@ -50,9 +58,14 @@ struct X509CertificateTests {
             (UInt8(0x04), "310101000000Z")
         ]
     )
-    func invalidTime(tag: UInt8, value: String) {
+    func invalidTime(
+        tag: UInt8,
+        value: String
+    ) {
+        let der = SampleCertificate.der(notAfter: (tag, value))
+
         #expect(throws: X509Error.invalidTime) {
-            try X509Certificate(der: SampleCertificate.der(notAfter: (tag, value)))
+            try X509Certificate(der: der)
         }
     }
 
@@ -70,8 +83,10 @@ struct X509CertificateTests {
             try X509Certificate(der: der)
         }
     }
+}
 
-    private func date(_ string: String) -> Date? {
+private extension X509CertificateTests {
+    func date(_ string: String) -> Date? {
         try? Date(string, strategy: .iso8601)
     }
 }

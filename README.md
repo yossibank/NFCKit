@@ -241,6 +241,27 @@ DER は、BER の書き方を 1 通りに絞ったものである（たとえば
 
 利用者証明用電子証明書の読み取りでは、VERIFY を一度も送らない。そのため、何度試しても暗証番号の残り回数は減らない。
 
+## 動かし方
+
+Xcode と [Homebrew](https://brew.sh/) が要る。ほかの道具は `make setup` で入る。
+
+| 道具 | 使い道 |
+| --- | --- |
+| [Mint](https://github.com/yonaskolb/Mint) | SwiftFormat の版をそろえる（`Mintfile`） |
+| [pre-commit](https://pre-commit.com/) | commit の前の確認を動かす |
+
+> [!NOTE]
+> commit の前に pre-commit が、ステージした Swift を SwiftFormat で整形する。直したファイルがあると commit は止まるので、`git add` して commit し直す。
+
+よく使うコマンドを、次の表に挙げる。
+
+| 対象 | コマンド |
+| --- | --- |
+| 道具を入れ、hook を入れる | `make setup` |
+| テスト（Mac の上） | `make test` |
+| Swift の整形 | `make format` |
+| 整形の確認 | `make lint` |
+
 ## 出典
 
 用語と値は、次の規格と資料に基づく。

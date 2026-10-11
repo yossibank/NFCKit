@@ -14,18 +14,23 @@ struct MyNumberCardErrorTests {
             (.unsupportedTag, .unsupportedCard)
         ]
     )
-    func fromTransport(error: TransportError, expected: MyNumberCardError) {
-        #expect(MyNumberCardError(error) == expected)
+    func fromTransport(
+        error: TransportError,
+        expected: MyNumberCardError
+    ) {
+        let converted = MyNumberCardError(error)
+        #expect(converted == expected)
     }
 
     @Test("セッションエラーを公開エラーに変換する")
     func fromSession() {
-        #expect(
-            MyNumberCardError(CardSessionError<MyNumberCardError>.transport(.connectionLost)) == .connectionLost
-        )
+        let transportError = CardSessionError<MyNumberCardError>.transport(.connectionLost)
+        let operationError = CardSessionError<MyNumberCardError>.operation(.pinLocked)
 
-        #expect(
-            MyNumberCardError(CardSessionError.operation(MyNumberCardError.pinLocked)) == .pinLocked
-        )
+        let fromTransport = MyNumberCardError(transportError)
+        let fromOperation = MyNumberCardError(operationError)
+
+        #expect(fromTransport == .connectionLost)
+        #expect(fromOperation == .pinLocked)
     }
 }
