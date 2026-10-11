@@ -2,6 +2,11 @@
 
 マイナンバーカードの IC チップを Core NFC で読み取る iOS SDK
 
+![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)
+![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
+![Core NFC](https://img.shields.io/badge/Core_NFC-000000?logo=nfc&logoColor=white)
+
 ## 用語
 
 IC カードとの通信に出てくる言葉を、このリポジトリで実際に使うバイト列を例に説明する。
@@ -240,7 +245,9 @@ DER は、BER の書き方を 1 通りに絞ったものである（たとえば
 
 用語と値は、次の規格と資料に基づく。
 
-- ISO/IEC 7816-4:2005（APDU、ステータスワード、BER-TLV、SELECT・READ BINARY・VERIFY）
-- [RFC 5280](https://www.rfc-editor.org/rfc/rfc5280)（X.509 の構造、シリアル番号、Name、時刻の書き方）
-- [OpenSC `jpki.h`](https://github.com/OpenSC/OpenSC/blob/66f7c34517723ee0aded01d697a210c00f3e85f2/src/libopensc/jpki.h)・[`pkcs15-jpki.c`](https://github.com/OpenSC/OpenSC/blob/a6587f0ac26af9c78f90b70ec5132847f3c8717a/src/libopensc/pkcs15-jpki.c)（公的個人認証 AP の AID と EF の番号）
-- [マイナンバーカード開発者ポータル「マイナンバーカードの中身まとめ」](https://portal.mynumber.dev/mynumber-apdu/summary)（AID と EF の番号）
+| 資料 | 使ったところ |
+| --- | --- |
+| ISO/IEC 7816-4:2005 | APDU、ステータスワード、BER-TLV、SELECT・READ BINARY・VERIFY |
+| [RFC 5280](https://www.rfc-editor.org/rfc/rfc5280) | X.509 の構造、シリアル番号、Name、時刻の書き方 |
+| [OpenSC `jpki.h`](https://github.com/OpenSC/OpenSC/blob/66f7c34517723ee0aded01d697a210c00f3e85f2/src/libopensc/jpki.h)・[`pkcs15-jpki.c`](https://github.com/OpenSC/OpenSC/blob/a6587f0ac26af9c78f90b70ec5132847f3c8717a/src/libopensc/pkcs15-jpki.c) | 公的個人認証 AP の AID と EF の番号 |
+| [マイナンバーカード開発者ポータル「マイナンバーカードの中身まとめ」](https://portal.mynumber.dev/mynumber-apdu/summary) | AID と EF の番号 |
