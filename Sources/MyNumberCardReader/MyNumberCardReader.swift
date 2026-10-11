@@ -7,10 +7,8 @@ public struct MyNumberCardReader: Sendable {
 
     #if canImport(CoreNFC)
         public init() {
-            let provider = CoreNFCSessionProvider(
-                alertMessage: "マイナンバーカードを iPhone の上部にかざしてください"
-            )
-
+            let message = "マイナンバーカードを iPhone の上部にかざしてください"
+            let provider = CoreNFCSessionProvider(alertMessage: message)
             self.init(sessionProvider: provider)
         }
     #endif
