@@ -9,21 +9,6 @@ package struct CommandAPDU: Equatable, Sendable {
     package let data: Data
     package let expectedLength: Int?
 
-    package var encoded: Data {
-        var bytes = Data([cla, ins, p1, p2])
-
-        if !data.isEmpty {
-            bytes.append(UInt8(data.count))
-            bytes.append(data)
-        }
-
-        if let expectedLength {
-            bytes.append(UInt8(truncatingIfNeeded: expectedLength))
-        }
-
-        return bytes
-    }
-
     package init(
         cla: UInt8 = 0x00,
         ins: UInt8,
@@ -50,6 +35,21 @@ package struct CommandAPDU: Equatable, Sendable {
 }
 
 package extension CommandAPDU {
+    var encoded: Data {
+        var bytes = Data([cla, ins, p1, p2])
+
+        if !data.isEmpty {
+            bytes.append(UInt8(data.count))
+            bytes.append(data)
+        }
+
+        if let expectedLength {
+            bytes.append(UInt8(truncatingIfNeeded: expectedLength))
+        }
+
+        return bytes
+    }
+
     // 出典: ISO/IEC 7816-4:2005 7.1.1
     // Table 39（P1 04 = DF 名で選択）
     // Table 40（P2 0C = 応答データなし）
@@ -66,18 +66,23 @@ package extension CommandAPDU {
     // Table 39（P1 02 = カレント DF 配下の EF を選択）
     // Table 40（P2 0C）
     static func select(efIdentifier: UInt16) throws(APDUError) -> CommandAPDU {
-        try CommandAPDU(
+        let identifier = Data([UInt8(efIdentifier >> 8), UInt8(efIdentifier & 0xFF)])
+
+        return try CommandAPDU(
             ins: 0xA4,
             p1: 0x02,
             p2: 0x0C,
-            data: Data([UInt8(efIdentifier >> 8), UInt8(efIdentifier & 0xFF)])
+            data: identifier
         )
     }
 
     // 出典: ISO/IEC 7816-4:2005
     // 7.2.2（P1 の bit 8 が 0 のとき P1-P2 の 15 ビットがオフセット）
     // 7.2.3 Table 42
-    static func readBinary(offset: Int, expectedLength: Int) throws(APDUError) -> CommandAPDU {
+    static func readBinary(
+        offset: Int,
+        expectedLength: Int
+    ) throws(APDUError) -> CommandAPDU {
         guard (0...0x7FFF).contains(offset) else {
             throw .offsetOutOfRange(offset)
         }

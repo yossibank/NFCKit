@@ -97,7 +97,8 @@ private extension X509Certificate {
                 }
 
                 if let type {
-                    attributes.append("\(type)=\(String(decoding: pair[1].value, as: UTF8.self))")
+                    let value = String(decoding: pair[1].value, as: UTF8.self)
+                    attributes.append("\(type)=\(value)")
                 }
             }
         }

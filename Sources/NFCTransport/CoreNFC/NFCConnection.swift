@@ -5,16 +5,12 @@
     @MainActor
     final class NFCConnection: NSObject {
         private var session: NFCTagReaderSession?
-
         private var tag: (any NFCISO7816Tag)?
-
-        private var detection: CheckedContinuation<
-            Result<Void, TransportError>,
-            Never
-        >?
-
+        private var detection: Detection?
         private var isEnded = false
+    }
 
+    extension NFCConnection {
         func begin(alertMessage: String) async throws(TransportError) {
             guard
                 let session = NFCTagReaderSession(
@@ -27,7 +23,6 @@
             }
 
             session.alertMessage = alertMessage
-
             self.session = session
 
             try await withCheckedContinuation { continuation in
@@ -39,22 +34,15 @@
                 throw .tagNotFound
             }
 
-            try await withCheckedContinuation { (continuation: CheckedContinuation<
-                Result<Void, TransportError>,
-                Never
-            >) in
+            try await withCheckedContinuation { (continuation: Detection) in
                 session.connect(to: .iso7816(tag)) { error in
-                    if let error {
-                        continuation.resume(
-                            returning: .failure(
-                                TransportError(error)
-                            )
-                        )
+                    let result: Result<Void, TransportError> = if let error {
+                        .failure(TransportError(error))
                     } else {
-                        continuation.resume(
-                            returning: .success(())
-                        )
+                        .success(())
                     }
+
+                    continuation.resume(returning: result)
                 }
             }.get()
         }
@@ -75,19 +63,11 @@
 
             return try await withCheckedContinuation { continuation in
                 tag.sendCommand(apdu: apdu) { result in
-                    continuation.resume(
-                        returning: result
-                            .map {
-                                ResponseAPDU(
-                                    data: $0.payload ?? Data(),
-                                    statusWord: StatusWord(
-                                        sw1: $0.statusWord1,
-                                        sw2: $0.statusWord2
-                                    )
-                                )
-                            }
-                            .mapError { TransportError($0) }
-                    )
+                    let response = result
+                        .map(ResponseAPDU.init)
+                        .mapError(TransportError.init)
+
+                    continuation.resume(returning: response)
                 }
             }.get()
         }
@@ -104,8 +84,12 @@
             session = nil
             tag = nil
         }
+    }
 
-        private func finishDetection(_ result: Result<Void, TransportError>) {
+    private extension NFCConnection {
+        typealias Detection = CheckedContinuation<Result<Void, TransportError>, Never>
+
+        func finishDetection(_ result: Result<Void, TransportError>) {
             detection?.resume(returning: result)
             detection = nil
         }
@@ -127,7 +111,6 @@
             }
 
             self.tag = tag
-
             finishDetection(.success(()))
         }
 
@@ -141,10 +124,15 @@
             }
 
             finishDetection(.failure(TransportError(error)))
-
             self.session = nil
-
             tag = nil
+        }
+    }
+
+    extension ResponseAPDU {
+        init(_ response: NFCISO7816ResponseAPDU) {
+            let statusWord = StatusWord(sw1: response.statusWord1, sw2: response.statusWord2)
+            self.init(data: response.payload ?? Data(), statusWord: statusWord)
         }
     }
 

@@ -63,40 +63,55 @@ struct CommandAPDUTests {
 
     @Test("データは 255 バイトまで")
     func dataLength() throws {
+        let longest = Data(count: 255)
+        let tooLong = Data(count: 256)
+
         #expect(throws: Never.self) {
-            try CommandAPDU(ins: 0x20, p1: 0x00, p2: 0x00, data: Data(count: 255))
+            try CommandAPDU(
+                ins: 0x20,
+                p1: 0x00,
+                p2: 0x00,
+                data: longest
+            )
         }
 
         #expect(throws: APDUError.dataTooLong(256)) {
-            try CommandAPDU(ins: 0x20, p1: 0x00, p2: 0x00, data: Data(count: 256))
+            try CommandAPDU(
+                ins: 0x20,
+                p1: 0x00,
+                p2: 0x00,
+                data: tooLong
+            )
         }
     }
 
     @Test("Le は 1 から 256 まで", arguments: [0, 257])
     func expectedLength(length: Int) {
         #expect(throws: APDUError.expectedLengthOutOfRange(length)) {
-            try CommandAPDU(ins: 0xB0, p1: 0x00, p2: 0x00, expectedLength: length)
+            try CommandAPDU(
+                ins: 0xB0,
+                p1: 0x00,
+                p2: 0x00,
+                expectedLength: length
+            )
         }
     }
 
     @Test("SELECT: DF 名で選択")
     func selectDFName() throws {
         let command = try CommandAPDU.select(dfName: Data([0xA0, 0x00]))
-
         #expect(command.encoded == Data([0x00, 0xA4, 0x04, 0x0C, 0x02, 0xA0, 0x00]))
     }
 
     @Test("SELECT: EF 識別子で選択")
     func selectEF() throws {
         let command = try CommandAPDU.select(efIdentifier: 0x0011)
-
         #expect(command.encoded == Data([0x00, 0xA4, 0x02, 0x0C, 0x02, 0x00, 0x11]))
     }
 
     @Test("READ BINARY: オフセットを P1-P2 に入れる")
     func readBinary() throws {
         let command = try CommandAPDU.readBinary(offset: 0x0102, expectedLength: 256)
-
         #expect(command.encoded == Data([0x00, 0xB0, 0x01, 0x02, 0x00]))
     }
 
@@ -110,7 +125,6 @@ struct CommandAPDUTests {
     @Test("VERIFY: データなしは Lc を付けない")
     func verifyWithoutData() throws {
         let command = try CommandAPDU.verify(reference: 0x80)
-
         #expect(command.encoded == Data([0x00, 0x20, 0x00, 0x80]))
     }
 

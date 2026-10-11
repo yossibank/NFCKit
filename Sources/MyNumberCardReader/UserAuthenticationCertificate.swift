@@ -5,7 +5,9 @@ public struct UserAuthenticationCertificate: Equatable, Sendable {
     public let issuer: String
     public let notAfter: Date
     public let serialNumber: String
+}
 
+extension UserAuthenticationCertificate {
     init(_ certificate: X509Certificate) {
         self.issuer = certificate.issuer
         self.notAfter = certificate.notAfter
@@ -15,11 +17,13 @@ public struct UserAuthenticationCertificate: Equatable, Sendable {
     }
 }
 
-extension UserAuthenticationCertificate: CustomStringConvertible, CustomReflectable {
+extension UserAuthenticationCertificate: CustomStringConvertible {
     public var description: String {
         "UserAuthenticationCertificate(****)"
     }
+}
 
+extension UserAuthenticationCertificate: CustomReflectable {
     public var customMirror: Mirror {
         Mirror(self, children: [:])
     }

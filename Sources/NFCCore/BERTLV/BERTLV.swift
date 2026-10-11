@@ -5,7 +5,17 @@ package struct BERTLV: Equatable, Sendable {
     package let tag: UInt32
     package let value: Data
 
-    package var isConstructed: Bool {
+    package init(
+        tag: UInt32,
+        value: Data
+    ) {
+        self.tag = tag
+        self.value = value
+    }
+}
+
+package extension BERTLV {
+    var isConstructed: Bool {
         var firstByte = tag
 
         while firstByte > 0xFF {
@@ -15,14 +25,8 @@ package struct BERTLV: Equatable, Sendable {
         return firstByte & 0x20 != 0
     }
 
-    package init(tag: UInt32, value: Data) {
-        self.tag = tag
-        self.value = value
-    }
-
-    package static func parse(_ data: Data) throws(BERTLVError) -> [BERTLV] {
+    static func parse(_ data: Data) throws(BERTLVError) -> [BERTLV] {
         let bytes = [UInt8](data)
-
         var index = 0
         var objects: [BERTLV] = []
 
@@ -34,20 +38,16 @@ package struct BERTLV: Equatable, Sendable {
                 throw .truncatedValue
             }
 
-            objects.append(
-                BERTLV(
-                    tag: tag,
-                    value: Data(bytes[index..<index + length])
-                )
-            )
-
+            let value = Data(bytes[index..<index + length])
+            let object = BERTLV(tag: tag, value: value)
+            objects.append(object)
             index += length
         }
 
         return objects
     }
 
-    package func children() throws(BERTLVError) -> [BERTLV] {
+    func children() throws(BERTLVError) -> [BERTLV] {
         guard isConstructed else {
             throw .notConstructed
         }
@@ -57,7 +57,10 @@ package struct BERTLV: Equatable, Sendable {
 }
 
 private extension BERTLV {
-    static func readTag(_ bytes: [UInt8], at index: inout Int) throws(BERTLVError) -> UInt32 {
+    static func readTag(
+        _ bytes: [UInt8],
+        at index: inout Int
+    ) throws(BERTLVError) -> UInt32 {
         let first = bytes[index]
         index += 1
 
@@ -94,7 +97,10 @@ private extension BERTLV {
         return UInt32(first) << 16 | UInt32(second) << 8 | UInt32(third)
     }
 
-    static func readLength(_ bytes: [UInt8], at index: inout Int) throws(BERTLVError) -> Int {
+    static func readLength(
+        _ bytes: [UInt8],
+        at index: inout Int
+    ) throws(BERTLVError) -> Int {
         guard index < bytes.count else {
             throw .truncatedLength
         }

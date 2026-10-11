@@ -15,34 +15,20 @@ public enum MyNumberCardError: Error, Equatable, Sendable {
 
 extension MyNumberCardError {
     init(_ error: TransportError) {
-        switch error {
-        case .readingUnavailable:
-            self = .nfcUnavailable
-
-        case .userCancelled:
-            self = .userCancelled
-
-        case .tagNotFound:
-            self = .tagNotFound
-
-        case .sessionTimedOut:
-            self = .timeout
-
-        case .connectionLost:
-            self = .connectionLost
-
-        case .unsupportedTag:
-            self = .unsupportedCard
+        self = switch error {
+        case .readingUnavailable: .nfcUnavailable
+        case .userCancelled: .userCancelled
+        case .tagNotFound: .tagNotFound
+        case .sessionTimedOut: .timeout
+        case .connectionLost: .connectionLost
+        case .unsupportedTag: .unsupportedCard
         }
     }
 
     init(_ error: CardSessionError<MyNumberCardError>) {
-        switch error {
-        case let .transport(error):
-            self.init(error)
-
-        case let .operation(error):
-            self = error
+        self = switch error {
+        case let .transport(error): MyNumberCardError(error)
+        case let .operation(error): error
         }
     }
 }

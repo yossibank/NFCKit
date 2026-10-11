@@ -2,13 +2,15 @@
     import CoreNFC
     import NFCCore
 
-    package struct CoreNFCSessionProvider: CardSessionProvider {
+    package struct CoreNFCSessionProvider {
         let alertMessage: String
 
         package init(alertMessage: String) {
             self.alertMessage = alertMessage
         }
+    }
 
+    extension CoreNFCSessionProvider: CardSessionProvider {
         package func withSession<T: Sendable, Failure: Error>(
             _ operation: (any CardTransport) async throws(Failure) -> T
         ) async throws(CardSessionError<Failure>) -> T {
@@ -26,7 +28,8 @@
             }
 
             do {
-                let value = try await operation(CoreNFCTransport(connection: connection))
+                let transport = CoreNFCTransport(connection: connection)
+                let value = try await operation(transport)
                 await connection.end(errorMessage: nil)
                 return value
             } catch {
@@ -36,9 +39,11 @@
         }
     }
 
-    struct CoreNFCTransport: CardTransport {
+    struct CoreNFCTransport {
         let connection: NFCConnection
+    }
 
+    extension CoreNFCTransport: CardTransport {
         func transmit(_ command: CommandAPDU) async throws(TransportError) -> ResponseAPDU {
             try await connection.transmit(command)
         }
