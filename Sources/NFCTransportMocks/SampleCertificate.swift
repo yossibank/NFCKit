@@ -23,10 +23,17 @@ package enum SampleCertificate {
 
         let tbsCertificate = tlv(
             0x30,
-            tlv(0xA0, tlv(0x02, [0x02])) + tlv(0x02, serialNumber) + algorithm + issuer + validity + tlv(0x30, [])
+            tlv(0xA0, tlv(0x02, [0x02])) + tlv(0x02, serialNumber) + algorithm + issuer + validity +
+                tlv(
+                    0x30,
+                    []
+                )
         )
 
-        return Data(tlv(0x30, tbsCertificate + algorithm + tlv(0x03, [0x00] + Array(repeating: 0x00, count: 256))))
+        return Data(tlv(
+            0x30,
+            tbsCertificate + algorithm + tlv(0x03, [0x00] + Array(repeating: 0x00, count: 256))
+        ))
     }
 
     private static func name(_ type: [UInt8], _ value: String) -> [UInt8] {

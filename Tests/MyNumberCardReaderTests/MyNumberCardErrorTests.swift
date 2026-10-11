@@ -21,7 +21,8 @@ struct MyNumberCardErrorTests {
     @Test("セッションエラーを公開エラーに変換する")
     func fromSession() {
         #expect(
-            MyNumberCardError(CardSessionError<MyNumberCardError>.transport(.connectionLost)) == .connectionLost
+            MyNumberCardError(CardSessionError<MyNumberCardError>.transport(.connectionLost)) ==
+                .connectionLost
         )
 
         #expect(

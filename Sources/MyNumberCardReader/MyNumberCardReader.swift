@@ -1,32 +1,36 @@
-import Foundation
-internal import NFCCore
 package import NFCTransport
+internal import NFCCore
+import Foundation
 
 public struct MyNumberCardReader: Sendable {
     let sessionProvider: any CardSessionProvider
+
+    #if canImport(CoreNFC)
+        public init() {
+            self.init(
+                sessionProvider: CoreNFCSessionProvider(
+                    alertMessage: "マイナンバーカードを iPhone の上部にかざしてください"
+                )
+            )
+        }
+    #endif
 
     package init(sessionProvider: any CardSessionProvider) {
         self.sessionProvider = sessionProvider
     }
 
-    #if canImport(CoreNFC)
-    public init() {
-        self.init(
-            sessionProvider: CoreNFCSessionProvider(
-                alertMessage: "マイナンバーカードを iPhone の上部にかざしてください"
-            )
-        )
-    }
-    #endif
-
-    public func readUserAuthenticationCertificate() async throws(MyNumberCardError) -> UserAuthenticationCertificate {
+    public func readUserAuthenticationCertificate() async throws(MyNumberCardError)
+        -> UserAuthenticationCertificate {
         let der: Data
 
         do {
             der = try await sessionProvider.withSession { transport throws(MyNumberCardError) in
                 // 出典: OpenSC src/libopensc/jpki.h（AID_JPKI）、pkcs15-jpki.c（User Authentication Certificate = 000A）
                 // TODO: J-LIS の公開仕様では未確認
-                try await select(dfName: Data([0xD3, 0x92, 0xF0, 0x00, 0x26, 0x01, 0x00, 0x00, 0x00, 0x01]), via: transport)
+                try await select(
+                    dfName: Data([0xD3, 0x92, 0xF0, 0x00, 0x26, 0x01, 0x00, 0x00, 0x00, 0x01]),
+                    via: transport
+                )
                 try await select(efIdentifier: 0x000A, via: transport)
 
                 return try await readCertificate(via: transport)
@@ -36,7 +40,7 @@ public struct MyNumberCardReader: Sendable {
         }
 
         do {
-            return UserAuthenticationCertificate(try X509Certificate(der: der))
+            return try UserAuthenticationCertificate(X509Certificate(der: der))
         } catch {
             throw .unsupportedCard
         }
@@ -45,15 +49,24 @@ public struct MyNumberCardReader: Sendable {
 
 private extension MyNumberCardReader {
     func select(dfName: Data, via transport: any CardTransport) async throws(MyNumberCardError) {
-        try await send(command { () throws(APDUError) in try .select(dfName: dfName) }, via: transport)
+        try await send(
+            command { () throws(APDUError) in try .select(dfName: dfName) },
+            via: transport
+        )
     }
 
-    func select(efIdentifier: UInt16, via transport: any CardTransport) async throws(MyNumberCardError) {
-        try await send(command { () throws(APDUError) in try .select(efIdentifier: efIdentifier) }, via: transport)
+    func select(
+        efIdentifier: UInt16,
+        via transport: any CardTransport
+    ) async throws(MyNumberCardError) {
+        try await send(
+            command { () throws(APDUError) in try .select(efIdentifier: efIdentifier) },
+            via: transport
+        )
     }
 
     func readCertificate(via transport: any CardTransport) async throws(MyNumberCardError) -> Data {
-        let header = [UInt8](try await readBinary(offset: 0, length: 4, via: transport))
+        let header = try await [UInt8](readBinary(offset: 0, length: 4, via: transport))
 
         guard
             header.count == 4,
@@ -83,7 +96,11 @@ private extension MyNumberCardReader {
         return data
     }
 
-    func readBinary(offset: Int, length: Int, via transport: any CardTransport) async throws(MyNumberCardError) -> Data {
+    func readBinary(
+        offset: Int,
+        length: Int,
+        via transport: any CardTransport
+    ) async throws(MyNumberCardError) -> Data {
         let readBinary = try command { () throws(APDUError) in
             try .readBinary(offset: offset, expectedLength: length)
         }
@@ -91,7 +108,8 @@ private extension MyNumberCardReader {
         return try await send(readBinary, via: transport).data
     }
 
-    func command(_ make: () throws(APDUError) -> CommandAPDU) throws(MyNumberCardError) -> CommandAPDU {
+    func command(_ make: () throws(APDUError) -> CommandAPDU) throws(MyNumberCardError)
+        -> CommandAPDU {
         do {
             return try make()
         } catch {
@@ -100,7 +118,10 @@ private extension MyNumberCardReader {
     }
 
     @discardableResult
-    func send(_ command: CommandAPDU, via transport: any CardTransport) async throws(MyNumberCardError) -> ResponseAPDU {
+    func send(
+        _ command: CommandAPDU,
+        via transport: any CardTransport
+    ) async throws(MyNumberCardError) -> ResponseAPDU {
         let response: ResponseAPDU
 
         do {

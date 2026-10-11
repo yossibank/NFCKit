@@ -1,5 +1,5 @@
-import Foundation
 internal import NFCCore
+import Foundation
 
 public struct UserAuthenticationCertificate: Equatable, Sendable {
     public let issuer: String

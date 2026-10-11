@@ -2,6 +2,9 @@
 package struct StatusWord: Hashable, Sendable {
     package static let success = StatusWord(sw1: 0x90, sw2: 0x00)
 
+    package let sw1: UInt8
+    package let sw2: UInt8
+
     package var rawValue: UInt16 {
         UInt16(sw1) << 8 | UInt16(sw2)
     }
@@ -25,9 +28,6 @@ package struct StatusWord: Hashable, Sendable {
             .other
         }
     }
-
-    package let sw1: UInt8
-    package let sw2: UInt8
 
     package init(sw1: UInt8, sw2: UInt8) {
         self.sw1 = sw1

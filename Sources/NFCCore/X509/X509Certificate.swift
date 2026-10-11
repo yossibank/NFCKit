@@ -16,7 +16,6 @@ package struct X509Certificate: Equatable, Sendable {
         else {
             throw .invalidStructure
         }
-
         guard
             let tbsCertificate = try Self.children(of: certificate).first,
             tbsCertificate.tag == 0x30
@@ -73,7 +72,7 @@ private extension X509Certificate {
         }
     }
 
-    // 4.1.2.4（Name は RDN の SET の並び。RDN は属性の種類（OID）と値の SEQUENCE）
+    /// 4.1.2.4（Name は RDN の SET の並び。RDN は属性の種類（OID）と値の SEQUENCE）
     static func distinguishedName(_ name: BERTLV) throws(X509Error) -> String {
         var attributes: [String] = []
 

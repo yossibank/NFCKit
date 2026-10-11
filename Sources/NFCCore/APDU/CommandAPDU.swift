@@ -2,6 +2,13 @@ import Foundation
 
 // 出典: ISO/IEC 7816-4:2005 5.1 Table 1（Lc・Le は短い長さフィールドのみ扱う）
 package struct CommandAPDU: Equatable, Sendable {
+    package let cla: UInt8
+    package let ins: UInt8
+    package let p1: UInt8
+    package let p2: UInt8
+    package let data: Data
+    package let expectedLength: Int?
+
     package var encoded: Data {
         var bytes = Data([cla, ins, p1, p2])
 
@@ -16,13 +23,6 @@ package struct CommandAPDU: Equatable, Sendable {
 
         return bytes
     }
-
-    package let cla: UInt8
-    package let ins: UInt8
-    package let p1: UInt8
-    package let p2: UInt8
-    package let data: Data
-    package let expectedLength: Int?
 
     package init(
         cla: UInt8 = 0x00,

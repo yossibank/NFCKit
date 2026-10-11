@@ -11,7 +11,8 @@ struct ReadUserAuthenticationCertificateTests {
     @Test("証明書を読み、発行者・有効期限・シリアル番号を返す")
     func read() async throws {
         let transport = ScriptedCardTransport(responses: successResponses())
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         let certificate = try await reader.readUserAuthenticationCertificate()
 
@@ -23,23 +24,25 @@ struct ReadUserAuthenticationCertificateTests {
     @Test("AP と EF を選び、先頭 4 バイトの後は 255 バイトずつ読む")
     func commands() async throws {
         let transport = ScriptedCardTransport(responses: successResponses())
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         _ = try await reader.readUserAuthenticationCertificate()
 
-        #expect(await transport.sentCommands == [
-            try .select(dfName: Data([0xD3, 0x92, 0xF0, 0x00, 0x26, 0x01, 0x00, 0x00, 0x00, 0x01])),
-            try .select(efIdentifier: 0x000A),
-            try .readBinary(offset: 0, expectedLength: 4),
-            try .readBinary(offset: 4, expectedLength: 255),
-            try .readBinary(offset: 259, expectedLength: der.count - 259)
+        #expect(try await transport.sentCommands == [
+            .select(dfName: Data([0xD3, 0x92, 0xF0, 0x00, 0x26, 0x01, 0x00, 0x00, 0x00, 0x01])),
+            .select(efIdentifier: 0x000A),
+            .readBinary(offset: 0, expectedLength: 4),
+            .readBinary(offset: 4, expectedLength: 255),
+            .readBinary(offset: 259, expectedLength: der.count - 259)
         ])
     }
 
     @Test("VERIFY を一度も送らない")
     func noVerify() async throws {
         let transport = ScriptedCardTransport(responses: successResponses())
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         _ = try await reader.readUserAuthenticationCertificate()
 
@@ -50,7 +53,10 @@ struct ReadUserAuthenticationCertificateTests {
         "ステータスワードを公開エラーに変換する",
         arguments: [
             (StatusWord(sw1: 0x6A, sw2: 0x82), MyNumberCardError.unsupportedCard),
-            (StatusWord(sw1: 0x69, sw2: 0x82), MyNumberCardError.unexpectedResponse(statusWord: 0x6982))
+            (
+                StatusWord(sw1: 0x69, sw2: 0x82),
+                MyNumberCardError.unexpectedResponse(statusWord: 0x6982)
+            )
         ]
     )
     func statusWord(statusWord: StatusWord, expected: MyNumberCardError) async {
@@ -59,7 +65,8 @@ struct ReadUserAuthenticationCertificateTests {
             .success(ResponseAPDU(statusWord: .success)),
             .success(ResponseAPDU(statusWord: statusWord))
         ])
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         await #expect(throws: expected) {
             try await reader.readUserAuthenticationCertificate()
@@ -68,8 +75,11 @@ struct ReadUserAuthenticationCertificateTests {
 
     @Test("通信が途中で切れたら connectionLost")
     func connectionLost() async {
-        let transport = ScriptedCardTransport(responses: Array(successResponses().prefix(3)) + [.failure(.connectionLost)])
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let transport =
+            ScriptedCardTransport(responses: Array(successResponses().prefix(3)) +
+                [.failure(.connectionLost)])
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         await #expect(throws: MyNumberCardError.connectionLost) {
             try await reader.readUserAuthenticationCertificate()
@@ -92,7 +102,8 @@ struct ReadUserAuthenticationCertificateTests {
             .success(ResponseAPDU(data: data.prefix(4), statusWord: .success)),
             .success(ResponseAPDU(data: data.dropFirst(4), statusWord: .success))
         ])
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
 
         await #expect(throws: MyNumberCardError.unsupportedCard) {
             try await reader.readUserAuthenticationCertificate()
@@ -102,7 +113,8 @@ struct ReadUserAuthenticationCertificateTests {
     @Test("print や dump に中身を出さない")
     func masked() async throws {
         let transport = ScriptedCardTransport(responses: successResponses())
-        let reader = MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
+        let reader =
+            MyNumberCardReader(sessionProvider: ScriptedCardSessionProvider(transport: transport))
         let certificate = try await reader.readUserAuthenticationCertificate()
 
         var dumped = ""

@@ -15,7 +15,10 @@ struct X509CertificateTests {
 
     @Test("シリアル番号の先頭の 00 は取り除く")
     func serialNumberSignByte() throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der(serialNumber: [0x00, 0x80]))
+        let certificate = try X509Certificate(der: SampleCertificate.der(serialNumber: [
+            0x00,
+            0x80
+        ]))
 
         #expect(certificate.serialNumber == Data([0x80]))
     }
@@ -35,7 +38,10 @@ struct X509CertificateTests {
 
     @Test("GeneralizedTime は 4 桁の年")
     func generalizedTime() throws {
-        let certificate = try X509Certificate(der: SampleCertificate.der(notAfter: (0x18, "20500101000000Z")))
+        let certificate = try X509Certificate(der: SampleCertificate.der(notAfter: (
+            0x18,
+            "20500101000000Z"
+        )))
 
         #expect(certificate.notAfter == date("2050-01-01T00:00:00Z"))
     }
