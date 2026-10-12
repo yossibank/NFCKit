@@ -7,6 +7,46 @@
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
 ![Core NFC](https://img.shields.io/badge/Core_NFC-000000?logo=nfc&logoColor=white)
 
+## 構成
+
+SDK は、役割ごとに 4 つのターゲットに分かれている。アプリが使うのは `MyNumberCardReader` だけである。
+
+| ターゲット | 役割 | 公開 |
+| --- | --- | --- |
+| `MyNumberCardReader` | カードから電子証明書を読む API | 製品（dynamic framework） |
+| `NFCCore` | APDU、ステータスワード、BER-TLV、X.509 を組み立てて読む | |
+| `NFCTransport` | Core NFC でカードと APDU をやり取りする | |
+| `NFCTransportMocks` | テストでカードの返事を差し替える | |
+
+ターゲットの依存の向きは、次の図のとおりである。
+
+```mermaid
+graph LR
+    MyNumberCardReader --> NFCTransport
+    MyNumberCardReader --> NFCCore
+    NFCTransport --> NFCCore
+    NFCTransportMocks --> NFCTransport
+```
+
+フォルダの役割を、次の木に示す。
+
+```
+.
+├── Sources/                 SDK のターゲット
+│   ├── MyNumberCardReader/
+│   ├── NFCCore/
+│   ├── NFCTransport/
+│   └── NFCTransportMocks/
+├── Tests/                   ターゲットごとのテスト
+├── SampleApp/               SDK を使う iOS アプリ（Xcode プロジェクト）
+├── scripts/
+│   └── build-xcframework.sh XCFramework と、その zip の checksum を作る
+├── Package.swift
+├── Makefile
+├── Brewfile                 Homebrew で入れる道具
+└── Mintfile                 Mint で入れる道具
+```
+
 ## 用語
 
 IC カードとの通信に出てくる言葉を、このリポジトリで実際に使うバイト列を例に説明する。
@@ -241,7 +281,51 @@ DER は、BER の書き方を 1 通りに絞ったものである（たとえば
 
 利用者証明用電子証明書の読み取りでは、VERIFY を一度も送らない。そのため、何度試しても暗証番号の残り回数は減らない。
 
-## 動かし方
+## 使い方
+
+SDK をアプリに組み込む手順、SampleApp の動かし方、開発に使うコマンドを、この順に示す。
+
+### アプリへの組み込み
+
+Xcode の Package Dependencies にこのリポジトリを足し、製品の `MyNumberCardReader` をアプリのターゲットに入れる。そのうえで、アプリのターゲットに次の設定をする。
+
+| 場所 | 設定 |
+| --- | --- |
+| General の Frameworks, Libraries, and Embedded Content | `MyNumberCardReader` を Embed & Sign にする |
+| Signing & Capabilities | Near Field Communication Tag Reading を足す |
+| entitlements | `com.apple.developer.nfc.readersession.formats` に `TAG` を入れる |
+| Info.plist | `NFCReaderUsageDescription` に、NFC を使う理由を書く |
+| Info.plist | `com.apple.developer.nfc.readersession.iso7816.select-identifiers` に、公的個人認証 AP の AID `D392F000260100000001` を入れる |
+
+> [!IMPORTANT]
+> `MyNumberCardReader` は dynamic framework である。Embed & Sign にしないと、アプリは起動した直後に `Library not loaded` で落ちる。entitlements に `TAG` が無いと、NFC に対応した端末でも `nfcUnavailable` になる。
+
+組み込んだら、次のように電子証明書を読む。カードをかざす画面は Core NFC が出す。
+
+```swift
+import MyNumberCardReader
+
+let reader = MyNumberCardReader()
+
+do {
+    let certificate = try await reader.readUserAuthenticationCertificate()
+    print(certificate.issuer, certificate.notAfter)
+} catch .nfcUnavailable {
+    // この端末やアプリの設定では NFC を使えない
+} catch {
+    // MyNumberCardError のほかの場合
+}
+```
+
+失敗の理由は `MyNumberCardError` で返る。画面に出す文の例は、SampleApp の `CertificateViewModel.swift` にある。
+
+### SampleApp
+
+`SampleApp/SampleApp.xcodeproj` は、このリポジトリの SDK をローカルのパッケージとして使う iOS アプリである。電子証明書を読み、発行者・有効期限・シリアル番号を表示する。
+
+Xcode で開き、Signing & Capabilities の Team を自分のものにして、NFC のある iPhone で動かす。シミュレーターでは NFC を使えない。
+
+### 開発のコマンド
 
 Xcode と [Homebrew](https://brew.sh/) が要る。ほかの道具は `make setup` で入る。
 
@@ -261,6 +345,7 @@ Xcode と [Homebrew](https://brew.sh/) が要る。ほかの道具は `make setu
 | テスト（Mac の上） | `make test` |
 | Swift の整形 | `make format` |
 | 整形の確認 | `make lint` |
+| XCFramework を作る | `scripts/build-xcframework.sh` |
 
 ## 出典
 
