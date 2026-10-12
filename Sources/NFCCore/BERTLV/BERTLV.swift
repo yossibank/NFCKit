@@ -67,9 +67,11 @@ private extension BERTLV {
         guard first != 0x00, first != 0xFF else {
             throw .invalidTag
         }
+
         guard first & 0x1F == 0x1F else {
             return UInt32(first)
         }
+
         guard index < bytes.count else {
             throw .truncatedTag
         }
@@ -80,9 +82,11 @@ private extension BERTLV {
         guard second >= 0x1F, second != 0x80 else {
             throw .invalidTag
         }
+
         guard second & 0x80 != 0 else {
             return UInt32(first) << 8 | UInt32(second)
         }
+
         guard index < bytes.count else {
             throw .truncatedTag
         }
@@ -117,6 +121,7 @@ private extension BERTLV {
         guard (1...4).contains(count) else {
             throw .invalidLength
         }
+
         guard count <= bytes.count - index else {
             throw .truncatedLength
         }

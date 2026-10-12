@@ -16,6 +16,7 @@ package struct X509Certificate: Equatable, Sendable {
         else {
             throw .invalidStructure
         }
+
         guard
             let tbsCertificate = try Self.children(of: certificate).first,
             tbsCertificate.tag == 0x30
